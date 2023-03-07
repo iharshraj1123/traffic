@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic signal</title>
+  <style>
+    body{
+      overflow: hidden;
+      background: rgb(48, 47, 47);
+    }
+    *{
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    .traffic-div{
+      height:100vh;
+      width: 100%;
+      display: flex;
+      align-content: center;
+      justify-content:center
+    }
+    #traffic-canvas{
+      height:100vh;
+    }
+  </style>
+</head>
+<body>
+<div class="traffic-div">
+  <canvas id="traffic-canvas" width="600" height="400"></canvas>
+</div>
+
+  <script>
+    let Red_time=2;
+    let Green_time=2;
+    let Yellow_time = 1;
+    let cycle_lenth = Red_time+Green_time+Yellow_time;
+
+    const canvas = document.getElementById('traffic-canvas');
+    const ctx = canvas.getContext('2d');
+    const lightRadius = 20; // radius of the traffic light circles
+    const lightSpacing = 50; // space between the traffic light circles
+    const lightX = canvas.width / 2; // x-coordinate of the center of the traffic light
+    const lightY = canvas.height / 2; // y-coordinate of the center of the traffic light
+    const roadWidth = 150; // width of the road
+    const carSize = 40; // size of the cars
+    let currentLight = 'red'; // the current state of the traffic light
+    let car1X = 0; // x-coordinate of the first car
+    let car2X = canvas.width - carSize; // x-coordinate of the second car
+    let car3X = canvas.width - carSize; // x-coordinate of the second car
+    let car4X = canvas.width - carSize; // x-coordinate of the second car
+    let car1Speed = 2; // speed of the first car
+    let car2Speed = 4; // speed of the second car
+    let car3Speed = 4; // speed of the second car
+    let car4Speed = 4; // speed of the second car
+    let lastTime = Date.now(); // time of the last update
+  
+    function drawTrafficLight() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
+
+    // draw the roads
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth / 2); // top left lane
+    ctx.fillRect(0, lightY, canvas.width, roadWidth / 2); // top right lane
+    ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth / 2, canvas.height); // bottom left lane
+    ctx.fillRect(lightX, 0, roadWidth / 2, canvas.height); // bottom right lane
+    ctx.strokeStyle = 'white';
+    ctx.setLineDash([5, 5]); // draw a dashed line
+    ctx.beginPath();
+    ctx.moveTo(lightX - roadWidth / 4, 0);
+    ctx.lineTo(lightX - roadWidth / 4, canvas.height);
+    ctx.stroke(); // draw the separator on the bottom road
+    ctx.beginPath();
+    ctx.moveTo(lightX + roadWidth / 4, 0);
+    ctx.lineTo(lightX + roadWidth / 4, canvas.height);
+    ctx.stroke(); // draw the separator on the bottom road
+    ctx.beginPath();
+    ctx.moveTo(0, lightY - roadWidth / 4);
+    ctx.lineTo(canvas.width, lightY - roadWidth / 4);
+    ctx.stroke(); // draw the separator on the top road
+    ctx.beginPath();
+    ctx.moveTo(0, lightY + roadWidth / 4);
+    ctx.lineTo(canvas.width, lightY + roadWidth / 4);
+    ctx.stroke(); // draw the separator on the top road
+    ctx.setLineDash([]); // reset the line dash style
+
+    // draw the roads
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth);
+    ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth, canvas.height);
+
+    // draw the red light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY - lightSpacing, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'red' ? 'red' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+
+    // draw the yellow light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'yellow' ? 'yellow' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+
+    // draw the green light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY + lightSpacing, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'green' ? 'green' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+
+    // draw the cars
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(car1X, lightY - carSize / 2, carSize, carSize);
+    ctx.fillRect(car2X, lightY - carSize / 2, carSize, carSize);
+  }
+
+  // function to move the cars
+  function moveCars() {
+    // calculate the elapsed time since the last update
+    const now = Date.now();
+    const elapsed = now - lastTime;
+    lastTime = now;
+
+    // Calculate the intermediate position of the cars based on the elapsed time
+    car1X += car1Speed * elapsed / 1000;
+    car2X -= car2Speed * elapsed / 1000;
+    car3X += car3Speed * elapsed / 1000;
+    car4X -= car4Speed * elapsed / 1000;
+
+    // move the cars to the opposite side of the canvas when they go off the screen
+    if (car1X > canvas.width) {
+      car1X = -carSize;
+    }
+    if (car2X < -carSize) {
+      car2X = canvas.width;
+    }
+    if (car3X > canvas.width) {
+      car3X = -carSize;
+    }
+    if (car4X < -carSize) {
+      car4X = canvas.width;
+    }
+  }
+
+// function to change the state of the traffic light
+function changeLight() {
+    if (currentLight === 'red') {
+      currentLight = 'green';
+      setTimeout(changeLight, Green_time*1000);
+    } else if (currentLight === 'yellow') {
+      currentLight = 'red';
+      setTimeout(changeLight, Red_time*1000);
+    } else if (currentLight === 'green') {
+      currentLight = 'yellow';
+      setTimeout(changeLight, Yellow_time*1000);
+    }
+    drawTrafficLight(); // update the traffic light and cars on the canvas
+  }
+
+  // start the traffic light and car updates
+  setInterval(moveCars, 20); // update the cars every 10 milliseconds
+  changeLight(); // start the traffic light change sequence
+  drawTrafficLight(); // draw the initial traffic light and cars on the canvas
+</script>
+  
+
+</body>
+</html>
+

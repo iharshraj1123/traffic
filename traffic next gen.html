@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic signal</title>
+  <style>
+    body{
+      overflow: hidden;
+      background: rgb(48, 47, 47);
+    }
+    *{
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    .traffic-div{
+      height:100vh;
+      width: 100%;
+      display: flex;
+      align-content: center;
+      justify-content:center
+    }
+    #traffic-canvas{
+      height:100vh;
+    }
+  </style>
+</head>
+<body>
+<div class="traffic-div">
+  <canvas id="traffic-canvas" width="600" height="400"></canvas>
+</div>
+
+  <script>
+    /*
+            | 1   2 |
+            |       |
+      ------        --------
+      8                   3
+      7                   4
+      ------        --------
+            |       |
+            | 6   5 |
+
+    */
+    let Red_time=2;
+    let Green_time=2;
+    let Yellow_time = 1;
+    let cycle_lenth = Red_time+Green_time+Yellow_time;
+
+    const canvas = document.getElementById('traffic-canvas');
+    const ctx = canvas.getContext('2d');
+    const lightRadius = 20; // radius of the traffic light circles
+    const lightSpacing = 50; // space between the traffic light circles
+    const lightX = canvas.width / 2; // x-coordinate of the center of the traffic light
+    const lightY = canvas.height / 2; // y-coordinate of the center of the traffic light
+    const roadWidth = 150; // width of the road
+    const carSize = 40; // size of the cars
+    let currentLight = 'red'; // the current state of the traffic light
+    let car=[]
+    let carSpeed = 30
+    // let car1X = 0; // x-coordinate of the first car
+    // let car2X = canvas.width - carSize -10; // x-coordinate of the second car
+    // let car3X = canvas.width - carSize +10; // x-coordinate of the second car
+    // let car4X = canvas.width - carSize; // x-coordinate of the second car
+    let lastTime = Date.now(); // time of the last update
+  
+    function drawTrafficLight() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
+
+    // draw the roads
+    // ctx.fillStyle = 'white';
+    // ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth / 2); // top left lane
+    // ctx.fillRect(0, lightY, canvas.width, roadWidth / 2); // top right lane
+    // ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth / 2, canvas.height); // bottom left lane
+    // ctx.fillRect(lightX, 0, roadWidth / 2, canvas.height); // bottom right lane
+    // ctx.strokeStyle = 'white';
+    // ctx.setLineDash([5, 5]); // draw a dashed line
+    // ctx.beginPath();
+    // ctx.moveTo(lightX - roadWidth / 4, 0);
+    // ctx.lineTo(lightX - roadWidth / 4, canvas.height);
+    // ctx.stroke(); // draw the separator on the bottom road
+    // ctx.beginPath();
+    // ctx.moveTo(lightX + roadWidth / 4, 0);
+    // ctx.lineTo(lightX + roadWidth / 4, canvas.height);
+    // ctx.stroke(); // draw the separator on the bottom road
+    // ctx.beginPath();
+    // ctx.moveTo(0, lightY - roadWidth / 4);
+    // ctx.lineTo(canvas.width, lightY - roadWidth / 4);
+    // ctx.stroke(); // draw the separator on the top road
+    // ctx.beginPath();
+    // ctx.moveTo(0, lightY + roadWidth / 4);
+    // ctx.lineTo(canvas.width, lightY + roadWidth / 4);
+    // ctx.stroke(); // draw the separator on the top road
+    // ctx.setLineDash([]); // reset the line dash style
+
+    // draw the roads
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth);
+    ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth, canvas.height);
+
+    // draw the red light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY - lightSpacing, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'red' ? 'red' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+
+    // draw the yellow light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'yellow' ? 'yellow' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+
+    // draw the green light
+    ctx.beginPath();
+    ctx.arc(lightX, lightY + lightSpacing, lightRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = currentLight === 'green' ? 'green' : 'gray';
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  generate_cars()
+
+  // function to move the cars
+  function moveCars() {
+    // calculate the elapsed time since the last update
+    const now = Date.now();
+    const elapsed = now - lastTime;
+    lastTime = now;
+
+    // Calculate the intermediate position of the cars based on the elapsed time
+    for(let i=0;i<car.X.length;i++){
+      car.X[i]+=carSpeed * elapsed / 1000;
+      // if(carX[i] > canvas.width){
+      //   carX[i] = -carSize;
+      // }
+      // else if(carX[i] < -carSize){
+      //   carX[i]
+      // }
+    }
+  }
+
+// function to change the state of the traffic light
+function changeLight() {
+    if (currentLight === 'red') {
+      currentLight = 'green';
+      setTimeout(changeLight, Green_time*1000);
+    } else if (currentLight === 'yellow') {
+      currentLight = 'red';
+      setTimeout(changeLight, Red_time*1000);
+    } else if (currentLight === 'green') {
+      currentLight = 'yellow';
+      setTimeout(changeLight, Yellow_time*1000);
+    }
+    drawTrafficLight(); // update the traffic light and cars on the canvas
+  }
+
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function distributeBalls(numBalls, numPeople) {
+  let ballsPerPerson = new Array(numPeople).fill(0);
+  let availablePeople = [...Array(numPeople).keys()];  // create an array of indices
+
+  for (let i = 0; i < numBalls; i++) {
+    if (availablePeople.length === 0) {  // no more people to give balls to
+      break;
+    }
+    let randomIndex = Math.floor(Math.random() * availablePeople.length);
+    let personIndex = availablePeople[randomIndex];
+    ballsPerPerson[personIndex]++;
+    availablePeople.splice(randomIndex, 1);  // remove the person from the list of available people
+  }
+
+  return ballsPerPerson;
+}
+
+  function generate_cars(){
+    let no_of_cars = getRandomInt(0, 8);
+    let car_distribution = distributeBalls(no_of_cars, 8);
+    array1.forEach(element => make_car_at(element));
+  }
+  function make_car_at(x,y){
+    switch (x) {
+      case 1:{
+        car.push({lane:x,going_to:y})
+      } break;
+      case 2:{
+
+      } break;
+      case 3:{
+
+      } break;
+      case 4:{
+
+      } break;
+      case 5:{
+
+      } break;
+      case 6:{
+
+      } break;
+      case 7:{
+
+      } break;
+      case 8:{
+
+      } break;
+      
+    }
+
+    //     // draw the cars
+    //ctx.fillStyle = 'blue';
+    // ctx.fillRect(car1X, lightY - carSize / 2, carSize, carSize);
+    // ctx.fillRect(car2X, lightY - carSize / 2, carSize, carSize);
+  }
+
+  // start the traffic light and car updates
+  setInterval(moveCars, 20); // update the cars every 10 milliseconds
+  changeLight(); // start the traffic light change sequence
+  drawTrafficLight(); // draw the initial traffic light and cars on the canvas
+</script>
+  
+
+</body>
+</html>
+

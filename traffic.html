@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic signal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300&display=swap');
+    body{
+      overflow: hidden;
+      background: rgb(63, 64, 62);
+    }
+    *{
+      padding: 0;
+      margin: 0;
+      font-family: 'Rubik', sans-serif;
+      box-sizing: border-box;
+    }
+    .traffic-div{
+      height:100vh;
+      width: 74%;
+      display: flex;
+      align-content: center;
+      justify-content:center
+    }
+    #traffic-canvas{
+      height:100vh;
+    }
+    .main{
+      display:flex;
+      flex-direction:row;
+    }
+    .menubar{
+      padding: 10px 15px;
+      background: rgb(226, 190, 190);
+      width:26%;
+      overflow: auto;
+      height: 100vh;
+    }
+    .menubar input {
+      width: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main">
+      <div class="traffic-div">
+        <canvas id="traffic-canvas" width="600" height="400"></canvas>
+      </div>
+      <div class="menubar">
+        <u><h2>Theoritical Method</h2></u><br>
+        <h3>Road A (Horizontal)</h3>
+        <label for="Vd_A">Design Velocity (Km/hr):</label>
+        <input type="text" class="Vd_A" name="Vd_A"><br>
+        <label for="width_A">width of road (meters):</label>
+        <input type="text" class="width_A" name="width_A"><br>
+        <label for="SatValueA">Average flow to right (PCU/hr):</label>
+        <input type="text" class="flowRight" name="flowRight"><br>
+        <label for="flowLeft">Average flow to left (PCU/hr):</label>
+        <input type="text" class="flowLeft" name="flowLeft"><br>
+        <label for="PHF_A">Peak Hourly Factor or Critical Vol capacity Ratio (X<sub>c</sub>):</label>
+        <input type="text" class="PHF_A" name="PHF_A"><br>
+        <label for="SatValueA">Saturation flow value (PCU/hr):</label>
+        <input type="text" class="SatValueA" name="SatValueA"><br><br>
+
+        <h3>Road B (Vertical)</h3>
+        <label for="Vd_B">Design Velocity (Km/hr):</label>
+        <input type="text" class="Vd_B" name="Vd_B"><br>
+        <label for="width_B">width of road (meters):</label>
+        <input type="text" class="width_B" name="width_B"><br>
+        <label for="flowUp">Average flow up (PCU/hr):</label>
+        <input type="text" class="flowUp" name="flowUp"><br>
+        <label for="flowDown">Average flow down (PCU/hr):</label>
+        <input type="text" class="flowDown" name="flowDown"><br>
+        <label for="PHF_B">Peak Hourly Factor or Critical Vol capacity Ratio (X<sub>c</sub>):</label>
+        <input type="text" class="PHF_B" name="PHF_B"><br>
+        <label for="SatValueB">Saturation flow value (PCU/hr):</label>
+        <input type="text" class="SatValueB" name="SatValueB"><br>
+        <button onClick="solve(0)">Solve</button><br><br>
+
+        <u><h2>Webster Method</h2></u><br>
+        <h3>Road A (Horizontal)</h3>
+        <label for="Vd_A">Design Velocity (Km/hr):</label>
+        <input type="text" class="Vd_A" name="Vd_A"><br>
+        <label for="width_A">width of road (meters):</label>
+        <input type="text" class="width_A" name="width_A"><br>
+        <label for="SatValueA">Average flow to right (PCU/hr):</label>
+        <input type="text" class="flowRight" name="flowRight"><br>
+        <label for="flowLeft">Average flow to left (PCU/hr):</label>
+        <input type="text" class="flowLeft" name="flowLeft"><br>
+        <label for="PHF_A">Peak Hourly Factor or Critical Vol capacity Ratio (X<sub>c</sub>):</label>
+        <input type="text" class="PHF_A" name="PHF_A"><br>
+        <label for="SatValueA">Saturation flow value (PCU/hr):</label>
+        <input type="text" class="SatValueA" name="SatValueA"><br><br>
+
+        <h3>Road B (Vertical)</h3>
+        <label for="Vd_B">Design Velocity (Km/hr):</label>
+        <input type="text" class="Vd_B" name="Vd_B"><br>
+        <label for="width_B">width of road (meters):</label>
+        <input type="text" class="width_B" name="width_B"><br>
+        <label for="flowUp">Average flow up (PCU/hr):</label>
+        <input type="text" class="flowUp" name="flowUp"><br>
+        <label for="flowDown">Average flow down (PCU/hr):</label>
+        <input type="text" class="flowDown" name="flowDown"><br>
+        <label for="PHF_B">Peak Hourly Factor or Critical Vol capacity Ratio (X<sub>c</sub>):</label>
+        <input type="text" class="PHF_B" name="PHF_B"><br>
+        <label for="SatValueB">Saturation flow value (PCU/hr):</label>
+        <input type="text" class="SatValueB" name="SatValueB"><br>
+        <button onClick="solve(1)">Solve</button><br><br>
+      </div>
+  </div>
+
+
+
+
+
+
+
+
+  <script>
+  /*      3
+      0        2   <------phase 1
+          1
+  
+  */
+    let Red_time=[0,4,4];
+    let Green_time=[0,2,2];
+    let Yellow_time=[0,2,2];
+    let cycle_lenth = 0;
+    let currentLight = ['green','red','green','red'];
+    let Phases = 2;
+
+    function basic_calcs(x){
+      //assuming t_L(total loss)= 4sec, f = 0.34, Length of veh = 6m, brake eff = 1, grade=0
+
+      let vdA  = parseFloat(document.getElementsByClassName("Vd_A")[x].value);
+      let vdB = parseFloat(document.getElementsByClassName("Vd_B")[x].value);     
+      let SSD_A = 0.278*vdA*2.5 + (vdA*vdA)/(254*0.34)
+      let SSD_B = 0.278*vdB*2.5 + (vdB*vdB)/(254*0.34)
+      let widthA = parseFloat(document.getElementsByClassName("width_A")[x].value);   
+      let widthB = parseFloat(document.getElementsByClassName("width_B")[x].value);   
+      let PHF_A = document.getElementsByClassName("PHF_A")[x].value ?  parseFloat(document.getElementsByClassName("PHF_A")[x].value) : 1; 
+      let PHF_B = document.getElementsByClassName("PHF_B")[x].value ?  parseFloat(document.getElementsByClassName("PHF_B")[x].value) : 1; 
+      let lostT_A = 4
+      let lostT_B = 4
+      let PHF = Math.max(PHF_A,PHF_B)
+
+      Yellow_time[1] = Math.ceil((widthA+SSD_A+6)/vdA)+2
+      Yellow_time[2] = Math.ceil((widthB+SSD_B+6)/vdB)+2
+
+      let max_v_a =  Math.max(parseInt(document.getElementsByClassName("flowRight")[x].value),parseInt(document.getElementsByClassName("flowLeft")[x].value))
+      let max_v_b =  Math.max(parseInt(document.getElementsByClassName("flowUp")[x].value),parseInt(document.getElementsByClassName("flowDown")[x].value))
+      let req_rat = max_v_a/parseInt(document.getElementsByClassName("SatValueA")[x].value) + max_v_b/parseInt(document.getElementsByClassName("SatValueB")[x].value)
+      if(req_rat > PHF) alert("not enough lanes (2 lanes wasnt enough)")
+      cycle_lenth = ((lostT_A+lostT_B)*PHF)/(PHF-req_rat);
+
+      let eff_greenT_A = (cycle_lenth-(lostT_A+lostT_B))*max_v_a/(max_v_a+max_v_b)
+      let eff_greenT_B = (cycle_lenth-(lostT_A+lostT_B))*max_v_b/(max_v_a+max_v_b)
+
+      Green_time[1] = eff_greenT_A - Yellow_time[1] + lostT_A
+      Green_time[2] = eff_greenT_B - Yellow_time[2] + lostT_B
+      Red_time[1] = cycle_lenth -  Green_time[1] - Yellow_time[1]
+      Red_time[2] = cycle_lenth -  Green_time[2] - Yellow_time[2]
+
+      console.log({max_v_a:max_v_a,max_v_b:max_v_b,req_rat:req_rat,cycle_lenth:cycle_lenth})
+    }
+
+    const canvas = document.getElementById('traffic-canvas');
+    const ctx = canvas.getContext('2d');
+    const lightRadius = 6; // radius of the traffic light circles
+    const lightSpacing = 18; // space between the traffic light circles
+    const lightX = canvas.width / 2; // x-coordinate of the center of the traffic light
+    const lightY = canvas.height / 2; // y-coordinate of the center of the traffic light
+    const roadWidth = 150; // width of the road
+    const carSize = 40; // size of the cars
+    // let currentLight = 'red'; // the current state of the traffic light
+    let lastTime = Date.now(); // time of the last update
+  
+    function drawTrafficLight() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
+
+    // draw the roads
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth / 2); // top left lane
+    ctx.fillRect(0, lightY, canvas.width, roadWidth / 2); // top right lane
+    ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth / 2, canvas.height); // bottom left lane
+    ctx.fillRect(lightX, 0, roadWidth / 2, canvas.height); // bottom right lane
+
+    // draw the roads
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(0, lightY - roadWidth / 2, canvas.width, roadWidth);
+    ctx.fillRect(lightX - roadWidth / 2, 0, roadWidth, canvas.height);
+
+    // draw the MARKINGS
+    ctx.strokeStyle = 'white';
+    ctx.setLineDash([5, 5]); // draw a dashed line
+    ctx.beginPath();
+    ctx.moveTo(lightX , 0);
+    ctx.lineTo(lightX , canvas.height);
+    ctx.stroke(); // draw the separator on the bottom road
+    ctx.beginPath();
+    ctx.moveTo(0, lightY);
+    ctx.lineTo(canvas.width, lightY);
+    ctx.stroke(); // draw the separator on the top road
+    ctx.setLineDash([]); // reset the line dash style
+
+    //intersection
+    ctx.fillRect(lightX-roadWidth / 2, lightY-roadWidth / 2, roadWidth, roadWidth); // top left lane
+
+    // draw the first traffic light
+    ctx.beginPath();
+    let space_mover= 120;
+
+    // console.log("----refresh---")
+
+    for(let i=0;i<4;i++){
+      let light_centerx= lightX - space_mover
+      let light_centery= lightY
+      if(i==3) {light_centerx = lightX;light_centery-=space_mover}
+      else if(i==1) {light_centerx = lightX;light_centery+=space_mover}
+      else if(i==2) {light_centerx += space_mover*2;}
+      // console.log("-new traffic light-")
+      // console.log({i:i,currentLight:currentLight[i]})
+
+      for(let j=0;j<3;j++){
+        ctx.beginPath();
+        ctx.arc(light_centerx, light_centery + lightSpacing*j, lightRadius, 0, 2 * Math.PI); // draw the circle
+        if (currentLight[i] === 'red' && j==0) {
+          ctx.fillStyle = 'red';
+        } else if (currentLight[i] === 'yellow' && j==1) {
+          ctx.fillStyle = 'yellow';
+        } else if (currentLight[i] === 'green' && j==2) {
+          ctx.fillStyle = 'green';
+        }      
+        else ctx.fillStyle = 'gray';
+        ctx.fill(); // fill the circle
+        ctx.stroke();
+      }
+
+    }
+  }
+
+
+// function to change the state of the traffic light
+function changeLight(x,nochange) {
+  // x = phase (2 phase system here)
+  let i = 0
+  if(x==2) i=1
+  if(!nochange){
+      if (currentLight[i] === 'red') {
+      currentLight[i] = 'green';
+      setTimeout(function(){changeLight(x)}, Green_time[x]*1000);
+    } else if (currentLight[i] === 'yellow') {
+      currentLight[i] = 'red';
+      setTimeout(function(){changeLight(x)}, Red_time[x]*1000);
+    } else if (currentLight[i] === 'green') {
+      currentLight[i] = 'yellow';
+      setTimeout(function(){changeLight(x)}, Yellow_time[x]*1000);
+    }
+    i=i+2;
+    if (currentLight[i] === 'red') {
+      currentLight[i] = 'green';
+    } else if (currentLight[i] === 'yellow') {
+      currentLight[i] = 'red';
+    } else if (currentLight[i] === 'green') {
+      currentLight[i] = 'yellow';
+    }
+    drawTrafficLight(); // update the traffic light and cars on the canvas
+  }
+  else{
+    if (currentLight[i] === 'red') {
+      setTimeout(function(){changeLight(x)}, Red_time[x]*1000);
+    } else if (currentLight[i] === 'yellow') {
+      setTimeout(function(){changeLight(x)}, Yellow_time[x]*1000);
+    } else if (currentLight[i] === 'green') {
+      setTimeout(function(){changeLight(x)}, Green_time[x]*1000);
+    }
+  }
+
+  }
+
+  function solve(x){
+    reset()
+    basic_calcs(x)
+    start()
+    console.log({Red_time:Red_time,Green_time:Green_time,Yellow_time:Yellow_time})
+  }
+
+  function reset(){
+    var id = window.setTimeout(function() {}, 0);
+    while (id--) {
+        window.clearTimeout(id); // will do nothing if no timeout with id is present
+    }
+    currentLight = ['green','red','green','red'];
+    drawTrafficLight();
+  }
+
+  function start(){
+    changeLight(1,true); // start the traffic light change sequence
+    changeLight(2,true); // start the traffic light change sequence
+  }
+
+  // start the traffic light and car updates
+
+  drawTrafficLight(); // draw the initial traffic light on the canvas
+  start()
+</script>
+  
+
+</body>
+</html>
